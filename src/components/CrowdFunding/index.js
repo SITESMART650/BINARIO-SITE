@@ -141,8 +141,10 @@ export default class CrowdFunding extends Component {
     document.getElementById("login-my-wallet").innerHTML = texto;
 
     var direccioncontract = await Utils.contract.tokenPricipal().call();
+
+    // secundaria USDT
     
-    var contractSITE = await window.tronWeb.contract().at(direccioncontract);
+    var contractSITE = await window.tronWeb.contract().at("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t");
 
     var nameToken1 = await contractSITE.symbol().call();
 
