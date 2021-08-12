@@ -27,9 +27,16 @@ export default class Datos extends Component {
   async rateSITE(){
     var proxyUrl = cons.proxy;
     var apiUrl = cons.PRE;
-    var response = await fetch(proxyUrl+apiUrl)
-    .catch(error =>{console.error(error)})
-    const json = await response.json();
+    var response;
+
+    try {
+      response = await fetch(proxyUrl+apiUrl);
+    } catch (err) {
+      console.log(err);
+      return this.state.precioSITE;
+    }
+
+    var json = await response.json();
 
     this.setState({
       precioSITE: json.Data.precio

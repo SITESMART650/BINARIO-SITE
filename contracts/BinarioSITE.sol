@@ -78,10 +78,7 @@ contract SITEBinary is Ownable{
   uint256 public lastUserId = 2;
   address public api;
 
-  constructor(address _tokenTRC20) {
-    (USDT_Contract, SALIDA_Contract) = (TRC20_Interface(_tokenTRC20), TRC20_Interface(_tokenTRC20));
-
-    (tokenPricipal, tokenPago) = (_tokenTRC20, _tokenTRC20);
+  constructor() {
 
     Investor storage usuario = investors[owner];
     api = owner;
@@ -95,19 +92,12 @@ contract SITEBinary is Ownable{
 
   }
 
-  function setRateBuy(uint256 _rate) public {
+  function setRates(uint256 _rateBuy, uint256 _rateSell) public {
 
     require( owner == msg.sender || api == msg.sender, "No tienes autorizacion");
 
-    rate = _rate;
-
-  }
-
-  function setRateSell(uint256 _rate) public {
-
-    require( owner == msg.sender || api == msg.sender, "No tienes autorizacion");
-
-    rate2 = _rate;
+    rate = _rateBuy;
+    rate2 = _rateSell;
 
   }
 
@@ -183,40 +173,24 @@ contract SITEBinary is Ownable{
   function setstate() public view  returns(uint256 Investors,uint256 Invested,uint256 RefRewards){
       return (totalInvestors, totalInvested, totalRefRewards);
   }
-
-  function InContractSITE() public view returns (uint256){
-    return USDT_Contract.balanceOf(address(this));
-  }
-
-  function InContractOTRO() public view returns (uint256){
-    return OTRO_Contract.balanceOf(address(this));
-  }
-
-  function InContractTRX() public view returns (uint256){
-    return address(this).balance;
-  }
   
   function tiempo() public view returns (uint256){
      return dias.mul(unidades);
   }
 
-  function verPlan(uint256 _nivel) public view returns (uint256){
-    return plans[_nivel];
-  }
+  function setPorcientos(uint256 _nivel, uint256 _value) public onlyOwner returns(uint256[5] memory){
 
-  function setPorcientos(uint256 _value_1, uint256 _value_2, uint256 _value_3, uint256 _value_4, uint256 _value_5) public onlyOwner returns(uint256, uint256, uint256, uint256, uint256){
+    porcientos[_nivel] = _value;
 
-    porcientos = [_value_1, _value_2, _value_3, _value_4, _value_5];
-
-    return (_value_1, _value_2, _value_3, _value_4, _value_5);
+    return porcientos;
 
   }
 
-  function setPrimeravezPorcientos(uint256 _value_1, uint256 _value_2, uint256 _value_3, uint256 _value_4, uint256 _value_5) public onlyOwner returns(uint256, uint256, uint256, uint256, uint256){
+  function setPrimeravezPorcientos(uint256 _nivel, uint256 _value) public onlyOwner returns(uint256[5] memory){
 
-    primervez = [_value_1, _value_2, _value_3, _value_4, _value_5];
+    primervez[_nivel] = _value;
 
-    return (_value_1, _value_2, _value_3, _value_4, _value_5);
+    return primervez;
 
   }
 
@@ -234,11 +208,11 @@ contract SITEBinary is Ownable{
 
   }
 
-  function setTiempoUnidades(uint256 _diasHorasSegundos) public onlyOwner returns(uint256){
+  function setTiempoUnidades(uint256 _unidades) public onlyOwner returns(uint256){
 
-    unidades = _diasHorasSegundos;
+    unidades = _unidades;
     
-    return (_diasHorasSegundos);
+    return (_unidades);
 
   }
 
@@ -346,6 +320,7 @@ contract SITEBinary is Ownable{
 
     require( _hand <= 1, "mano incorrecta");
     require(_plan <= plans.length && _plan > 0, "plan incorrecto");
+    require(plans[_plan] > 0, "plan desactivado");
 
     Investor storage usuario = investors[msg.sender];
     
@@ -377,37 +352,48 @@ contract SITEBinary is Ownable{
             sponsor.directos++;
             Hand storage izquierda = handLeft[_sponsor];
             Hand storage derecha = handRigth[_sponsor];
-            if (izquierda.referer == address(0) && _hand == 0  || derecha.referer == address(0) && _hand == 1) {
-              if (_hand == 0){
-                  izquierda.referer = msg.sender;
-              }else{
-                  derecha.referer = msg.sender;
-              }
-              
-            } else {
+            if ( _hand == 0 ) {
+                
+              if (izquierda.referer == address(0) ) {
 
-              address[] memory network;
-
-              network = actualizarNetwork(network);
-
-              if (_hand == 0){
-                network[0] = izquierda.referer;
-                (_hand, _sponsor) = recursiveInsertion(network);
-                  
-              }else{
-                network[0] = derecha.referer;
-                (_hand, _sponsor) = recursiveInsertion(network);
-                  
-              }
-              
-              if (_hand == 0){
-                izquierda = handLeft[_sponsor];
                 izquierda.referer = msg.sender;
-              }else{
-                derecha = handRigth[_sponsor];
-                derecha.referer = msg.sender;
+                
+              } else {
+
+                address[] memory network;
+
+                network = actualizarNetwork(network);
+
+                network[0] = izquierda.referer;
+
+                 _sponsor = insertionLeft(network);
+                    
+                 izquierda = handLeft[_sponsor];
+                 izquierda.referer = msg.sender;
+                
+                
               }
+            }else{
+
+              if ( derecha.referer == address(0) ) {
+
+                derecha.referer = msg.sender;
+                
+              } else {
+
+                address[] memory network;
+
+                network = actualizarNetwork(network);
+
+                network[0] = derecha.referer;
+
+                  _sponsor = insertionRigth(network);
+                    
+                  derecha = handRigth[_sponsor];
+                  derecha.referer = msg.sender;
+                
               
+              }
             }
             
           }
@@ -587,7 +573,7 @@ contract SITEBinary is Ownable{
     return newNetwork;
   }
 
-  function allnetwork( address[] memory network) public view returns ( address[] memory) {
+  function allnetwork( address[] memory network ) public view returns ( address[] memory) {
 
     for (uint i = 0; i < network.length; i++) {
 
@@ -615,32 +601,41 @@ contract SITEBinary is Ownable{
 
     }
 
-
     return network;
   }
 
-  function recursiveInsertion(address[] memory network) public view returns (uint256 hand, address wallet) {
+  function insertionLeft(address[] memory network) public view returns ( address wallet) {
 
     for (uint i = 0; i < network.length; i++) {
 
       address userLeft = handLeft[network[i]].referer;
-      address userRigth = handRigth[network[i]].referer;
 
       if( userLeft == address(0) ){
-        return (0, network[i]);
-      }
-
-      if( userRigth == address(0) ){
-        return (1, network[i]);
+        return  network[i];
       }
 
       network = actualizarNetwork(network);
       network[network.length-1] = handLeft[network[i]].referer;
+
+    }
+    insertionLeft(network);
+  }
+
+  function insertionRigth(address[] memory network) public view returns (address wallet) {
+
+    for (uint i = 0; i < network.length; i++) {
+
+      address userRigth = handRigth[network[i]].referer;
+
+      if( userRigth == address(0) ){
+        return network[i];
+      }
+
       network = actualizarNetwork(network);
       network[network.length-1] = handRigth[network[i]].referer;
 
     }
-    recursiveInsertion(network);
+    insertionRigth(network);
   }
 
   function withdrawable(address any_user) public view returns (uint256 amount) {
