@@ -375,7 +375,7 @@ export default class Oficina extends Component {
 
           <div className="col-md-6 col-lg-5 offset-lg-1 wow bounceInUp" data-wow-duration="1s">
             <div className="box">
-              <div className="icon"><i className="ion-ios-analytics-outline" style={{color: '#ff689b'}}></i></div>
+              <div className="icon"><i className="ion-ios-speedometer-outline" style={{color: '#ff689b'}}></i></div>
               
               <h4 className="title"><a href="#services">Disponible {available} USDT</a></h4>
                 

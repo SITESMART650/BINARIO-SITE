@@ -159,9 +159,9 @@ export default class CrowdFunding extends Component {
     //console.log(aprovado);
 
     if (aprovado > 0) {
-      aprovado = "Conectar Wallet";
-    }else{
       aprovado = "Comprar Plan";
+    }else{
+      aprovado = "Conectar Wallet";
     }
 
     inversors.inicio = parseInt(inversors.inicio._hex)*1000;
