@@ -376,7 +376,7 @@ export default class CrowdFunding extends Component {
 
       if ( balanceSite < amount ) {
 
-        window.alert("No tienes suficiente SITE");
+        window.alert("No tienes suficiente saldo, necesitas: "+amount+" SITE y en tu wallet tienes: "+balanceSite);
       }
 
       if (balanceTRX < 50) {
