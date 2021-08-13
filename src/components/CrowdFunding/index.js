@@ -182,7 +182,7 @@ export default class CrowdFunding extends Component {
       aprovado = "Upgrade Plan";
 
       valorPlan = await Utils.contract.plans(inversors.plan).call();
-      valorPlan = (parseInt(valorPlan._hex)/10**8)*this.state.precioSITE;
+      valorPlan = parseInt(valorPlan._hex)/10**8;
       
     }
 
@@ -301,9 +301,8 @@ export default class CrowdFunding extends Component {
 
     var amount = await Utils.contract.plans(valueUSDT).call();
     amount = parseInt(amount._hex)/10**8;
-    amount = amount/this.state.precioSITE;
-
     amount = amount-balance;
+    amount = amount/this.state.precioSITE;
 
     if ( aprovado > 0 && 
       balanceSite >= amount && 
