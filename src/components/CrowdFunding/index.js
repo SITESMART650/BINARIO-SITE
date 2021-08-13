@@ -171,13 +171,20 @@ export default class CrowdFunding extends Component {
 
     var porcentiempo = ((Date.now()-inversors.inicio)*100)/tiempo;
 
-    if( porcentiempo < 100 ){
-      aprovado = "Upgrade Plan";
-    }
-
     var decimales = await contractSITE.decimals().call();
 
     var balance = await contractSITE.balanceOf(accountAddress).call();
+    balance = parseInt(balance._hex)/10**decimales;
+
+
+    if( porcentiempo < 100 ){
+      aprovado = "Upgrade Plan";
+
+      var valorPlan = await contractSITE.plans(inversors.plan).call();
+      valorPlan = (parseInt(valorPlan._hex)/10**8)*this.state.precioSITE;
+      
+    }
+    
     balance = parseInt(balance._hex)/10**decimales;
 
     var partner = cons.WS;
@@ -246,8 +253,8 @@ export default class CrowdFunding extends Component {
     var balanceTRX = await window.tronWeb.trx.getBalance();
     balanceTRX = balanceTRX/10**6;
 
-    var direccioncontract2 = await Utils.contract.tokenPago().call();  
-    //var direccioncontract2 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";// USDT contrato o secundario
+    //var direccioncontract2 = await Utils.contract.tokenPago().call();  
+    var direccioncontract2 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";// USDT contrato o secundario
 
     var contractUSDT = await window.tronWeb.contract().at(direccioncontract2);
     var nameToken2 = await contractUSDT.symbol().call();
@@ -259,7 +266,7 @@ export default class CrowdFunding extends Component {
 
     this.setState({
       deposito: aprovado,
-      balance: balance,
+      balance: valorPlan,
       decimales: decimales,
       accountAddress: accountAddress,
       porcentaje: porcentaje,
@@ -276,7 +283,7 @@ export default class CrowdFunding extends Component {
 
   async deposit() {
 
-    var { balanceSite, balanceTRX, valueUSDT } = this.state;
+    var { balanceSite, balanceTRX, valueUSDT , balance} = this.state;
 
     var accountAddress =  await window.tronWeb.trx.getAccount();
     accountAddress = window.tronWeb.address.fromHex(accountAddress.address);
@@ -296,6 +303,7 @@ export default class CrowdFunding extends Component {
     var amount = await Utils.contract.plans(valueUSDT).call();
     amount = parseInt(amount._hex)/10**8;
     amount = amount/this.state.precioSITE;
+    amount = amount-balance;
 
     if ( aprovado > 0 && 
       balanceSite >= amount && 
@@ -414,7 +422,7 @@ export default class CrowdFunding extends Component {
           </p>
           <p className="card-text ">
         
-            {this.state.nameToken1}: <strong>{this.state.balance}</strong> (${(this.state.balance*this.state.precioSITE).toFixed(2)})<br />
+            {this.state.nameToken1}: <strong>{this.state.balanceSite}</strong> (${(this.state.balanceSite*this.state.precioSITE).toFixed(2)})<br />
             TRX: <strong>{(this.state.balanceTRX*1).toFixed(6)}</strong><br />
             {this.state.nameToken2}: <strong>{(this.state.balanceUSDT*1).toFixed(6)}</strong><br />
           </p>
