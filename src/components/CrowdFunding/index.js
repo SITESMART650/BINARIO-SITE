@@ -22,7 +22,8 @@ export default class CrowdFunding extends Component {
       balanceUSDT: "Cargando...",
       precioSITE: 0,
       valueUSDT: 0,
-      hand: 0
+      hand: 0,
+      selectedOption: null
 
     };
 
@@ -106,7 +107,7 @@ export default class CrowdFunding extends Component {
 
     if (aprovado > 0) {
 
-      for (let index = inversors.plan; index < 9; index++) {
+      for (let index = inversors.plan; index < 16; index++) {
         var precio = await Utils.contract.plans(index).call();
         precio = parseInt(precio)/10**8;
         if( precio > 0 ){
@@ -160,6 +161,7 @@ export default class CrowdFunding extends Component {
 
     if (aprovado > 0) {
       aprovado = "Comprar Plan";
+      console.log(this.state.selectedOption);
     }else{
       aprovado = "Conectar Wallet";
     }
@@ -295,7 +297,10 @@ export default class CrowdFunding extends Component {
 
     if (aprovado <= 0 && balanceTRX >= 50){
       await contractUSDT.approve(contractAddress, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send();
-      window.alert("Registro exitoso");
+      window.alert("Conexión exitosa");
+      this.setState({
+        selectedOption: null
+      });
       return;
     }
 
@@ -306,7 +311,9 @@ export default class CrowdFunding extends Component {
 
     if ( aprovado > 0 && 
       balanceSite >= amount && 
-      balanceTRX >= 50 
+      balanceTRX >= 50 &&
+      valueUSDT > 0 &&
+      this.state.selectedOption != null
       ){
 
         var loc = document.location.href;
@@ -366,9 +373,6 @@ export default class CrowdFunding extends Component {
         }else{
           window.alert("Por favor usa link de referido para comprar un plan");
         }
-          
-        
-
 
     }else{
 
@@ -383,8 +387,17 @@ export default class CrowdFunding extends Component {
   
       }
 
+      if (this.state.selectedOption == null) {
+        window.alert("Por favor selecciona un plan valido");
+  
+      }
+
       
     }
+
+    this.setState({
+      selectedOption: null
+    });
 
 
   };
@@ -428,7 +441,7 @@ export default class CrowdFunding extends Component {
 
           <h4>Plan Staking</h4>
           <div className="input-group sm-3 text-center">
-            <Select options={options}  onChange={this.handleChangeUSDT} className="form-control mb-20 h-auto" />
+            <Select value={this.state.selectedOption} options={options}  onChange={this.handleChangeUSDT} className="form-control mb-20 h-auto" />
           </div>
 
             <p className="card-text">Recomendamos tener más de 150 TRX para ejecutar las transacciones correctamente</p>

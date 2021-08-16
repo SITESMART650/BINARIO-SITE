@@ -36,7 +36,7 @@ const TronLinkGuide = props => {
     }
 
     return (
-    <> <a href='/'>
+    <> <a href='/staking'>
 
         <div className='tronLink row' style={{'padding': '3em','color': 'black','textDecoration': 'none'}}>
 
