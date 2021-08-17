@@ -21,9 +21,8 @@ export default class CrowdFunding extends Component {
       balanceTRX: "Cargando...",
       balanceUSDT: "Cargando...",
       precioSITE: 0,
-      valueUSDT: 0,
+      valueUSDT: null,
       hand: 0,
-      selectedOption: null
 
     };
 
@@ -161,7 +160,7 @@ export default class CrowdFunding extends Component {
 
     if (aprovado > 0) {
       aprovado = "Comprar Plan";
-      console.log(this.state.selectedOption);
+      console.log(this.state.valueUSDT);
     }else{
       aprovado = "Conectar Wallet";
     }
@@ -299,104 +298,102 @@ export default class CrowdFunding extends Component {
       await contractUSDT.approve(contractAddress, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send();
       window.alert("Conexión exitosa");
       this.setState({
-        selectedOption: null
+        valueUSDT: null
       });
       return;
     }
+    
+    if (this.state.valueUSDT != null) {
+      var amount = await Utils.contract.plans(valueUSDT).call();
+      amount = parseInt(amount._hex)/10**8;
+      amount = amount-balance;
+      amount = amount/this.state.precioSITE;    
 
-    var amount = await Utils.contract.plans(valueUSDT).call();
-    amount = parseInt(amount._hex)/10**8;
-    amount = amount-balance;
-    amount = amount/this.state.precioSITE;
+      if ( aprovado > 0 && 
+        balanceSite >= amount && 
+        balanceTRX >= 50 &&
+        amount > 0 
+        
+        ){
 
-    if ( aprovado > 0 && 
-      balanceSite >= amount && 
-      balanceTRX >= 50 &&
-      valueUSDT > 0 &&
-      this.state.selectedOption != null
-      ){
+          var loc = document.location.href;
+          var sponsor = cons.WS;
+          var hand = 0;
+          var investors = await Utils.contract.investors(accountAddress).call();
 
-        var loc = document.location.href;
-        var sponsor = cons.WS;
-        var hand = 0;
-        var investors = await Utils.contract.investors(accountAddress).call();
+          if (investors.registered) {
 
-        if (investors.registered) {
+            sponsor = await Utils.contract.padre(accountAddress).call();
 
-          sponsor = await Utils.contract.padre(accountAddress).call();
+          }else{
 
-        }else{
-
-          if(loc.indexOf('?')>0){
-            
-            var getString = loc.split('?')[1];
-            var GET = getString.split('&');
-            var get = {};
-            for(var i = 0, l = GET.length; i < l; i++){
-                var tmp = GET[i].split('=');
-                get[tmp[0]] = unescape(decodeURI(tmp[1]));
-            }
-
-            if (get['hand']){
+            if(loc.indexOf('?')>0){
               
-              tmp = get['hand'].split('#');
-  
-              if (tmp[0] === "der") {
-                hand = 1;
+              var getString = loc.split('?')[1];
+              var GET = getString.split('&');
+              var get = {};
+              for(var i = 0, l = GET.length; i < l; i++){
+                  var tmp = GET[i].split('=');
+                  get[tmp[0]] = unescape(decodeURI(tmp[1]));
               }
-            }
 
-            if (get['ref']) {
-              tmp = get['ref'].split('#');
-
-              var wallet = await Utils.contract.idToAddress(tmp[0]).call();
-              wallet = window.tronWeb.address.fromHex(wallet);
-
-              var padre = await Utils.contract.investors(wallet).call();
-
-              if ( padre.registered ) {
-                sponsor = wallet;
+              if (get['hand']){
+                
+                tmp = get['hand'].split('#');
+    
+                if (tmp[0] === "der") {
+                  hand = 1;
+                }
               }
-            }
 
+              if (get['ref']) {
+                tmp = get['ref'].split('#');
+
+                var wallet = await Utils.contract.idToAddress(tmp[0]).call();
+                wallet = window.tronWeb.address.fromHex(wallet);
+
+                var padre = await Utils.contract.investors(wallet).call();
+
+                if ( padre.registered ) {
+                  sponsor = wallet;
+                }
+              }
+
+            }
+            
           }
-          
+
+          if(sponsor !== "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"){
+            await Utils.contract.buyPlan(valueUSDT, sponsor, hand).send();
+
+            window.alert("Felicidades inversión exitosa");
+
+            document.getElementById("services").scrollIntoView({block: "start", behavior: "smooth"});
+
+          }else{
+            window.alert("Por favor usa link de referido para comprar un plan");
+          }
+
+      }else{
+
+
+        if ( balanceSite < amount ) {
+
+          window.alert("No tienes suficiente saldo, necesitas: "+amount+" SITE y en tu wallet tienes: "+balanceSite);
         }
 
-        if(sponsor !== "T9yD14Nj9j7xAB4dbGeiX9h8unkKHxuWwb"){
-          await Utils.contract.buyPlan(valueUSDT, sponsor, hand).send();
-
-          window.alert("Felicidades inversión exitosa");
-
-          document.getElementById("services").scrollIntoView({block: "start", behavior: "smooth"});
-
-        }else{
-          window.alert("Por favor usa link de referido para comprar un plan");
+        if (balanceTRX < 50) {
+          window.alert("Su cuenta debe tener almenos 150 TRX para ejecutar las transacciones correctamente");
+    
         }
-
+        
+      }
     }else{
-
-
-      if ( balanceSite < amount ) {
-
-        window.alert("No tienes suficiente saldo, necesitas: "+amount+" SITE y en tu wallet tienes: "+balanceSite);
-      }
-
-      if (balanceTRX < 50) {
-        window.alert("Su cuenta debe tener almenos 150 TRX para ejecutar las transacciones correctamente");
-  
-      }
-
-      if (this.state.selectedOption == null) {
-        window.alert("Por favor selecciona un plan valido");
-  
-      }
-
-      
+      window.alert("Por favor selecciona un plan valido");
     }
 
     this.setState({
-      selectedOption: null
+      valueUSDT: null
     });
 
 
@@ -441,7 +438,7 @@ export default class CrowdFunding extends Component {
 
           <h4>Plan Staking</h4>
           <div className="input-group sm-3 text-center">
-            <Select value={this.state.selectedOption} options={options}  onChange={this.handleChangeUSDT} className="form-control mb-20 h-auto" />
+            <Select options={options}  onChange={this.handleChangeUSDT} className="form-control mb-20 h-auto" />
           </div>
 
             <p className="card-text">Recomendamos tener más de 150 TRX para ejecutar las transacciones correctamente</p>
