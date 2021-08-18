@@ -294,7 +294,9 @@ export default class CrowdFunding extends Component {
     var aprovado = await contractUSDT.allowance(accountAddress,contractAddress).call();
     aprovado = parseInt(aprovado._hex);
 
-    if (aprovado <= 0 && balanceTRX >= 50){
+    var minTRX = 150;
+
+    if (aprovado <= 0 && balanceTRX >= minTRX){
       await contractUSDT.approve(contractAddress, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send();
       window.alert("Conexión exitosa");
       this.setState({
@@ -311,7 +313,7 @@ export default class CrowdFunding extends Component {
 
       if ( aprovado > 0 && 
         balanceSite >= amount && 
-        balanceTRX >= 50 &&
+        balanceTRX >= minTRX &&
         amount > 0 
         
         ){
@@ -382,8 +384,8 @@ export default class CrowdFunding extends Component {
           window.alert("No tienes suficiente saldo, necesitas: "+amount+" SITE y en tu wallet tienes: "+balanceSite);
         }
 
-        if (balanceTRX < 50) {
-          window.alert("Su cuenta debe tener almenos 150 TRX para ejecutar las transacciones correctamente");
+        if (balanceTRX < minTRX) {
+          window.alert("Su cuenta debe tener almenos "+minTRX+" TRX para ejecutar las transacciones correctamente");
     
         }
         
@@ -441,7 +443,7 @@ export default class CrowdFunding extends Component {
             <Select options={options}  onChange={this.handleChangeUSDT} className="form-control mb-20 h-auto" />
           </div>
 
-            <p className="card-text">Recomendamos tener más de 150 TRX para ejecutar las transacciones correctamente</p>
+            <p className="card-text">Debes tener más de 150 TRX para ejecutar correctamente las transacciones correctamente</p>
             <p className="card-text">Partner:<br />
             <strong>{this.state.partner}</strong></p>
 
