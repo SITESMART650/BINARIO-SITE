@@ -256,11 +256,18 @@ export default class Oficina extends Component {
     var MIN_RETIRO = await Utils.contract.MIN_RETIRO().call();
     MIN_RETIRO = parseInt(MIN_RETIRO._hex)/10**decimales;
 
-    if ( available > MIN_RETIRO ){
+    var balanceTRX = await window.tronWeb.trx.getBalance();
+    balanceTRX = balanceTRX/10**6;
+
+    if ( available > MIN_RETIRO && balanceTRX >= 150){
       await Utils.contract.withdraw().send();
     }else{
-      if (available < MIN_RETIRO) {
+      if (available <= MIN_RETIRO) {
         window.alert("El minimo para retirar son: "+(MIN_RETIRO)+" USDT");
+      }
+
+      if (balanceTRX < 150) {
+        window.alert("Debes tener almenos 150 TRX disponible para realizar satisfactoriamente esta transacción");
       }
     }
   };
